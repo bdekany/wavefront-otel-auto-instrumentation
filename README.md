@@ -18,7 +18,7 @@ helm install wavefront wavefront/wavefront \
 Patch Proxy to open port 4317 and 4318
 
 ```shell
-kubectl patch svc wavefront-proxy
+kubectl -n wavefront patch svc wavefront-proxy --patch '{"spec": {"ports": [{"name":"oltphttp", "port": 4318, "protocol": "TCP"}, {"name":"oltpgrpc", "port": 4317, "protocol": "TCP"}]}}}'
 ```
 
 INstall cert-manager and opentelementry operator
