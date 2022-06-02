@@ -55,10 +55,10 @@ Demo with Spring and Rabbit MQ
 helm repo add bitnami https://charts.bitnami.com/bitnami  && helm repo update
 
 helm install rabbitserver bitnami/rabbitmq \
-    --set persistence.enabled=false\
+    --set persistence.enabled=false \
     --set metrics.enabled=true \
-    --set auth.username=tutorial\
-    --set auth.password=tutorial\ 
+    --set auth.username=tutorial \
+    --set auth.password=tutorial \
     --set nameOverride=rabbitserver
 ```
 
