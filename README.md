@@ -21,11 +21,17 @@ Patch Proxy to open port 4317 and 4318
 kubectl -n wavefront patch svc wavefront-proxy --patch '{"spec": {"ports": [{"name":"oltphttp", "port": 4318, "protocol": "TCP"}, {"name":"oltpgrpc", "port": 4317, "protocol": "TCP"}]}}'
 ```
 
-INstall cert-manager and opentelementry operator
+Install cert-manager (pre requisite for oTel)
 
 ```shell
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
+kubectl wait pods -l app=webhook -n cert-manager --for=condition=Ready
+```
+
+Install opentelemetry-operator 
+```shell
 kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
+kubectl wait pods -l control-plane=controller-manager -n opentelemetry-operator-system  --for=condition=Ready
 ```
 
 Create auto-instrumentation it wavefront-proxy as collector
@@ -37,6 +43,9 @@ kind: Instrumentation
 metadata:
   name: my-instrumentation
 spec:
+  env:
+    - name: OTEL_RESOURCE_ATTRIBUTES
+      value: "application=rabbitApp"
   exporter:
     endpoint: http://wavefront-proxy.wavefront:4317
   propagators:
@@ -96,7 +105,7 @@ metadata:
     instrumentation.opentelemetry.io/inject-java: "default/my-instrumentation"
 spec:
   containers:
-  - image: docker.io/bdekany/rabbitmq-tutorials:spring-amq`
+  - image: docker.io/bdekany/rabbitmq-tutorials:spring-amqp
     name: sender
     imagePullPolicy: Always
     command: ["java"]
