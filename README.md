@@ -33,7 +33,7 @@ helm install wavefront wavefront/wavefront \
 ```
 
 Patch `wavefront-proxy` service to open port `4317` and `4318` to all namespaces.
-```json
+```shell
 kubectl -n wavefront patch svc wavefront-proxy --patch '{"spec": {"ports": [{"name":"oltphttp", "port": 4318, "protocol": "TCP"}, {"name":"oltpgrpc", "port": 4317, "protocol": "TCP"}]}}'
 ```
 
