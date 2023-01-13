@@ -26,8 +26,8 @@ helm repo add wavefront https://wavefronthq.github.io/helm/ && helm repo update
 kubectl create namespace wavefront
 
 helm install wavefront wavefront/wavefront \
-    --set wavefront.url=https://TENANT_NAME.wavefront.com \
-    --set wavefront.token=API_KEY \
+    --set wavefront.url=https://$TENANT_NAME.wavefront.com \
+    --set wavefront.token=$API_KEY \
     --set proxy.args="--otlpGrpcListenerPorts 4317 --otlpHttpListenerPorts 4318" \
     --set clusterName="dbrice-gke" --namespace wavefront
 ```
@@ -142,7 +142,7 @@ metadata:
 spec:
   containers:
   - image: docker.io/bdekany/rabbitmq-tutorials:spring-amqp
-    name: sender
+    name: receiver
     env:
     - name: OTEL_RESOURCE_ATTRIBUTES
       value: "application=rabbitApp"
