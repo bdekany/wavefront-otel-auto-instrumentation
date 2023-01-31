@@ -1,6 +1,6 @@
-# Monitor Business Apps with OpenTelemetry and VMware Tanzu Observability (Wavefront)
+# Monitor Business Apps with OpenTelemetry and VMware Aria Operations for Applications (Wavefront)
 
-A project which demonstrates usage of [OpenTelemetry K8S Operator](https://github.com/open-telemetry/opentelemetry-operator) and [VMware Tanzu Observability](https://tanzu.vmware.com/observability) to monitor Application without modifing its source code.
+A project which demonstrates usage of [OpenTelemetry K8S Operator](https://github.com/open-telemetry/opentelemetry-operator) and [VMware Aria Operations for Applications](https://www.vmware.com/products/aria-operations-for-applications.html) to monitor Application without modifing its source code.
 
 > This is a Proof-of-Concept. OpenTelemetry Collector and Operator APIs are subjects to change. Use with caution!
 
@@ -11,30 +11,52 @@ The purpose is to gather "RED" metrics to monitor App health ([See Google SRE Bo
 ![Data Flow Diagram](images/how-it-works.jpg)
 1. OTel Operator injects **OTel Auto-Instrumentation** in Application Pod (sidecar)
 2. **OTel Auto-Instrumentation** sends metrics and traces to Wavefront Proxy (OTL Protocol over gRPC or HTTP)
-3. Wavefront Proxy with built-in **OTel Collector** capabilities buffers and sends metrics and traces to [VMware Tanzu Observability](https://tanzu.vmware.com/observability) tenant.
+3. Wavefront Proxy with built-in **OTel Collector** capabilities buffers and sends metrics and traces to [VMware Aria Operations for Applications](https://www.vmware.com/products/aria-operations-for-applications.html) tenant.
 
 ## Installation
 ### Prerequisites
  - Kubernetes >= 1.19
- - Helm 3+
- - VMware Tanzu Observability `API KEY` + `TENANT NAME` ([Get Trial Code](https://tanzu.vmware.com/observability-trial))
+ - VMware Aria Operations for Applications `API KEY` + `TENANT NAME` ([Get Trial Code](https://tanzu.vmware.com/observability-trial))
 
 ### Install Wavefront Proxy (OTel Collector Service)
 Install Wavefront Proxy Collector which gather metrics from Kubernetes, deployed middleware and acts as OTel Collector Service.
-```shell
-helm repo add wavefront https://wavefronthq.github.io/helm/ && helm repo update
-kubectl create namespace wavefront
 
-helm install wavefront wavefront/wavefront \
-    --set wavefront.url=https://$TENANT_NAME.wavefront.com \
-    --set wavefront.token=$API_KEY \
-    --set proxy.args="--otlpGrpcListenerPorts 4317 --otlpHttpListenerPorts 4318" \
-    --set clusterName="dbrice-gke" --namespace wavefront
+The installation is done through our Operator
+
+```shell
+kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-operator-for-kubernetes/v2.1.1/deploy/kubernetes/wavefront-operator.yaml
+kubectl wait pods -l control-plane=controller-manager -n observability-system  --for=condition=Ready
+```
+Create a secret with your API KEY
+
+```shell
+export YOUR_WAVEFRONT_TOKEN=aaaaaa-bbbb-cccc-9ddddd7a-eeeeeee
+kubectl create -n observability-system secret generic wavefront-secret --from-literal token=${YOUR_WAVEFRONT_TOKEN}
 ```
 
-Patch `wavefront-proxy` service to open port `4317` and `4318` to all namespaces.
+Then create a Wavefront CRD with the OTLP protocol activated and the proper URL to your tenant
+
 ```shell
-kubectl -n wavefront patch svc wavefront-proxy --patch '{"spec": {"ports": [{"name":"oltphttp", "port": 4318, "protocol": "TCP"}, {"name":"oltpgrpc", "port": 4317, "protocol": "TCP"}]}}'
+kubectl apply -f - <<EOF
+apiVersion: wavefront.com/v1alpha1
+kind: Wavefront
+metadata:
+  name: wavefront
+  namespace: observability-system
+spec:
+  clusterName: dbrice-gke
+  wavefrontUrl: https://longboard.wavefront.com/
+  dataCollection:
+    metrics:
+      enable: true
+  dataExport:
+    wavefrontProxy:
+      enable: true
+      oltp:
+        grpcPort: 4317
+        httpPort: 4318
+        resourceAttrsOnMetricsIncluded: true
+EOF
 ```
 
 ### Install cert-manager (prerequisite for OTel operator)
@@ -61,14 +83,13 @@ metadata:
   name: my-instrumentation
 spec:
   exporter:
-    endpoint: http://wavefront-proxy.wavefront:4317
+    endpoint: http://wavefront-proxy.observability-system:4317
   propagators:
     - tracecontext
     - baggage
     - b3
   sampler:
     type: parentbased_traceidratio
-    argument: "0.25"
 EOF
 ```
 
