@@ -24,8 +24,8 @@ Install Wavefront Proxy Collector which gather metrics from Kubernetes, deployed
 The installation is done through our Operator
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-operator-for-kubernetes/v2.1.1/deploy/kubernetes/wavefront-operator.yaml
-kubectl wait pods -l control-plane=controller-manager -n observability-system  --for=condition=Ready
+kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-operator-for-kubernetes/v2.2.0/deploy/kubernetes/wavefront-operator.yaml
+kubectl wait pods -l app.kubernetes.io/component=controller-manager -n observability-system  --for=condition=Ready
 ```
 Create a secret with your API KEY
 
@@ -52,7 +52,7 @@ spec:
   dataExport:
     wavefrontProxy:
       enable: true
-      oltp:
+      otlp:
         grpcPort: 4317
         httpPort: 4318
         resourceAttrsOnMetricsIncluded: true
@@ -113,6 +113,8 @@ helm install rabbitserver bitnami/rabbitmq \
     --set auth.username=tutorial \
     --set auth.password=tutorial \
     --set nameOverride=rabbitserver
+
+kubectl wait pods -l app.kubernetes.io/instance=rabbitserver  --for=condition=Ready
 ```
 
 ### Deploy the Java Apps
