@@ -24,7 +24,7 @@ Install Wavefront Proxy Collector which gather metrics from Kubernetes, deployed
 The installation is done through our Operator
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-operator-for-kubernetes/v2.2.0/deploy/kubernetes/wavefront-operator.yaml
+kubectl apply -f https://github.com/wavefrontHQ/observability-for-kubernetes/releases/download/v2.11.0/wavefront-operator.yaml
 kubectl wait pods -l app.kubernetes.io/component=controller-manager -n observability-system  --for=condition=Ready
 ```
 Create a secret with your API KEY
@@ -61,7 +61,7 @@ EOF
 
 ### Install cert-manager (prerequisite for OTel operator)
 ```shell
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.3/cert-manager.yaml
 kubectl wait pods -l app=webhook -n cert-manager --for=condition=Ready
 ```
 
@@ -90,6 +90,14 @@ spec:
     - b3
   sampler:
     type: parentbased_traceidratio
+  python:
+    env:
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://wavefront-proxy.observability-system:4318
+  dotnet:
+    env:
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://wavefront-proxy.observability-system:4318
 EOF
 ```
 
@@ -174,6 +182,24 @@ spec:
   dnsPolicy: ClusterFirst
   restartPolicy: Always
 EOF
+```
+
+Check the logs of both containers.
+
+```shell
+kubectl logs -l app=rabbitmq-tutorials -f
+
+[otel.javaagent 2023-08-09 12:16:57:010 +0000] [main] INFO io.opentelemetry.javaagent.tooling.VersionLogger - opentelemetry-javaagent - version: 1.28.0
+ __                 __   ___                  
+|__)_ |_ |_ .|_|\/|/  \   |    |_ _  _. _ | _ 
+| \(_||_)|_)||_|  |\_\/   | |_||_(_)| |(_||_) 
+                                              
+Ready ... running for 10000ms
+ [x] Received 'Hello World!'
+ [x] Received 'Hello World!'
+ [x] Sent 'Hello World!'
+ [x] Received 'Hello World!'
+ [x] Sent 'Hello World!'
 ```
 
 ## Build your own docker image
