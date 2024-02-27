@@ -24,7 +24,7 @@ Install Wavefront Proxy Collector which gather metrics from Kubernetes, deployed
 The installation is done through our Operator
 
 ```shell
-kubectl apply -f https://github.com/wavefrontHQ/observability-for-kubernetes/releases/download/v2.11.0/wavefront-operator.yaml
+kubectl apply -f https://github.com/wavefrontHQ/observability-for-kubernetes/releases/download/v2.17.1/wavefront-operator.yaml
 kubectl wait pods -l app.kubernetes.io/component=controller-manager -n observability-system  --for=condition=Ready
 ```
 Create a secret with your API KEY
@@ -61,7 +61,7 @@ EOF
 
 ### Install cert-manager (prerequisite for OTel operator)
 ```shell
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.3/cert-manager.yaml
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.8/cert-manager.yaml
 kubectl wait pods -l app=webhook -n cert-manager --for=condition=Ready
 ```
 
